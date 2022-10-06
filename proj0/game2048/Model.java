@@ -113,7 +113,85 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        int size = this.board.size();
+        int score = 0;
+        //对于每一个块记录前面第一个空格的位置，初始设为size
+        int firstBlockEmpty;
+        //记录上一次的合并情况
+        boolean lastMerge;
+        this.board.setViewingPerspective(side);
+        for(int i=0;i<size;i++)
+        {
+            lastMerge = false;
+            firstBlockEmpty = size;
+            for(int j=size-1;j>=0;j--)
+            {
+                if(firstBlockEmpty==size&&this.board.tile(i,j)==null)
+                {
+                    firstBlockEmpty = j;
+                }
+                else
+                {
+                    if(this.board.tile(i,j)!=null)
+                    {
+                        if(firstBlockEmpty==size)
+                        {
+                            //前面没有空块,检查与前一个是否相等
+                            if(j==size-1) continue;
+                            else
+                            {
+                                if(lastMerge==false&&this.board.tile(i,j).value()==this.board.tile(i,j+1).value())
+                                {
+                                    changed = true;
+                                    score += 2* this.board.tile(i,j).value();
+                                    this.board.move(i,j+1,this.board.tile(i,j));
+                                    firstBlockEmpty = j;
+                                    lastMerge = true;
+                                }
+                                else
+                                {
+                                    lastMerge = false;
+                                }
+                            }
 
+
+                        }
+                        else
+                        {
+                            changed = true;
+                            //前面有空块判断是否是第一个
+                            if(firstBlockEmpty==size-1)
+                            {
+                                //直接移动
+                                this.board.move(i,firstBlockEmpty,this.board.tile(i,j));
+                                firstBlockEmpty--;
+                            }
+                            else
+                            {
+                                //检查能否合并,上一个必须没有合并过并且数值相等
+                                if(lastMerge==false&&(this.board.tile(i,j).value()==this.board.tile(i,firstBlockEmpty+1).value()))
+                                {
+                                    score += this.board.tile(i,j).value() * 2;
+                                    this.board.move(i,firstBlockEmpty+1,this.board.tile(i,j));
+                                    lastMerge = true;
+                                }
+                                else
+                                {
+                                    lastMerge = false;
+                                    this.board.move(i,firstBlockEmpty,this.board.tile(i,j));
+                                    firstBlockEmpty--;
+                                }
+
+                            }
+
+                        }
+                    }
+                }
+
+            }
+        }
+        this.score += score;
+        this.board.setViewingPerspective(Side.NORTH);
         checkGameOver();
         if (changed) {
             setChanged();
@@ -138,6 +216,15 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        int size = b.size();
+        for(int i=0;i<size;i++)
+        {
+            for(int j=0;j<size;j++)
+            {
+                if(b.tile(i,j)==null)
+                    return true;
+            }
+        }
         return false;
     }
 
@@ -148,6 +235,15 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        int size = b.size();
+        for(int i=0;i<size;i++)
+        {
+            for(int j=0;j<size;j++)
+            {
+                if(b.tile(i,j)!=null&&b.tile(i,j).value()==MAX_PIECE)
+                    return true;
+            }
+        }
         return false;
     }
 
@@ -159,6 +255,29 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        if(emptySpaceExists(b)) return true;
+        int size = b.size();
+        for(int i=0;i<size;i++)
+        {
+            for(int j=0;j<size;j++)
+            {
+                if(i+1<size&&b.tile(i,j)!=null&&b.tile(i+1,j)!=null)
+                {
+                    if(b.tile(i,j).value() == b.tile(i+1,j).value())
+                    {
+                        return true;
+                    }
+                }
+                if(j+1<size&&b.tile(i,j)!=null&&b.tile(i,j+1)!=null)
+                {
+                    if(b.tile(i,j).value() == b.tile(i,j+1).value())
+                    {
+                        return true;
+                    }
+                }
+
+            }
+        }
         return false;
     }
 
